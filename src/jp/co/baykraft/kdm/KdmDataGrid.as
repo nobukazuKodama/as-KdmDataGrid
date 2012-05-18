@@ -13,6 +13,7 @@ package jp.co.baykraft.kdm
     import spark.components.gridClasses.GridColumn;
     import spark.events.GridCaretEvent;
     import spark.events.GridEvent;
+    import spark.primitives.Line;
     
     /** 
      *  spark.components.DataGrid の拡張 DataGrid <br/>
@@ -66,6 +67,20 @@ package jp.co.baykraft.kdm
          *  @productversion Flex 4.5
          */
         public var topScroller:Scroller;
+        //----------------------------------
+        // lockedSeparator
+        //----------------------------------
+        [Bindable]
+        [SkinPart(required="false")]
+        /**
+         *  上部グリッドとのセパレータ
+         *  
+         *  @langversion 3.0
+         *  @playerversion Flash 10
+         *  @playerversion AIR 2.5
+         *  @productversion Flex 4.5
+         */
+        public var lockedSeparator:Line;
 
         //----------------------------------
         //  コンストラクタ
@@ -96,7 +111,6 @@ package jp.co.baykraft.kdm
             super.partAdded(partName, instance);
             if (instance == grid) {
                 grid.columns = super.columns;
-                topGridInitializeDataGridElement();
             }
             if (lockedDataProvider) {
                 if (instance == topGrid) {
@@ -106,12 +120,14 @@ package jp.co.baykraft.kdm
                     topGrid.columnSeparator = columnSeparator;
                     topGrid.rowSeparator = rowSeparator;
                     topGrid.hoverIndicator = hoverIndicator;
-                    topGrid.caretIndicator = caretIndicator;
                     topGrid.selectionIndicator = selectionIndicator;
-                    topGridInitializeDataGridElement();
+                    lazyGridColumnWidth();
                 }
                 else if (instance == topScroller) {
                     visibleLeftScroller = true;
+                }
+                else if (instance == lockedSeparator) {
+                    visibleLockedSeparator = true;
                 }
             }
         }
@@ -129,20 +145,11 @@ package jp.co.baykraft.kdm
         }
         override protected function separator_mouseDragHandler(event:GridEvent):void {
             super.separator_mouseDragHandler(event);
-            if (topGrid)
-                this.callLater(lazyGridColumnWidth);
+            if (lockedDataProvider)
+                lazyGridColumnWidth();
         }
         override protected function separator_mouseUpHandler(event:GridEvent):void {
             super.separator_mouseUpHandler(event);
-        }
-        /**
-         * 
-         * @param value
-         * 
-         */
-        override public function set nestLevel(value:int):void {
-            topGridInitializeDataGridElement();
-            super.nestLevel = value;
         }
 
         //----------------------------------
@@ -163,25 +170,18 @@ package jp.co.baykraft.kdm
         //----------------------------------
         //  private 系の処理
         //----------------------------------
-        private function topGridInitializeDataGridElement():void {
-            if (!grid || !topGrid)
-                return;
-
-            trace("grid", grid.nestLevel, "topGrid", topGrid.nestLevel, "判定", (grid.nestLevel <= topGrid.nestLevel));
-            if (grid.nestLevel <= topGrid.nestLevel)
-                grid.nestLevel = topGrid.nestLevel + 1;
-        }
         /**
          * 
          * 
          */
         private function lazyGridColumnWidth(): void {
-            if (!grid || !topGrid)
+            if (!grid || !lockedDataProvider)
                 return;
-
+            
             grid.columns.toArray().forEach(function(item:*, index:int, array:Array):void{
                 var col: GridColumn = topGrid.columns.toArray()[index] as GridColumn;
                 col.width = GridColumn(item).width;
+                topGrid.columns.itemUpdated(col);
             });
         }
         /**
@@ -205,6 +205,13 @@ package jp.co.baykraft.kdm
         private function set visibleLeftScroller(value: Boolean): void {
             topScroller.visible = value;
             topScroller.includeInLayout = value;
+        }
+        private function get visibleLockedSeparator():Boolean {
+            return lockedSeparator.visible;
+        }
+        private function set visibleLockedSeparator(value: Boolean): void {
+            lockedSeparator.visible = value;
+            lockedSeparator.includeInLayout = value;
         }
 
     }

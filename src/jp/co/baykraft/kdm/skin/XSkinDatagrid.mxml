@@ -220,32 +220,31 @@ declarations define DataGrid skin parts except <code>headerColumnSeparator</code
                 <s:Line id="headerSeparator">
                     <s:stroke><s:SolidColorStroke color="0x696969" weight="1" caps="square"/></s:stroke>
                 </s:Line>
-                
-                <s:Group width="100%" height="100%">
-                    <s:layout><s:VerticalLayout gap="0" /></s:layout>
 
-                    <s:Scroller id="topScroller" minViewportInset="1" hasFocusableChildren="false"
-                                visible="false" includeInLayout="false">
-                        <s:Grid id="topGrid" itemRenderer="spark.skins.spark.DefaultGridItemRenderer">
-                            <s:GridLayer name="backgroundLayer"/>
-                            <s:GridLayer name="selectionLayer"/>
-                            <s:GridLayer name="editorIndicatorLayer"/>
-                            <s:GridLayer name="rendererLayer"/>
-                            <s:GridLayer name="overlayLayer"/>
-                        </s:Grid>
-                    </s:Scroller>
+                <s:Scroller id="topScroller" minViewportInset="1" hasFocusableChildren="false"
+                            visible="false" includeInLayout="false">
+                    <s:Grid id="topGrid" itemRenderer="spark.skins.spark.DefaultGridItemRenderer">
+                        <s:GridLayer name="backgroundLayer"/>
+                        <s:GridLayer name="selectionLayer"/>
+                        <s:GridLayer name="editorIndicatorLayer"/>
+                        <s:GridLayer name="rendererLayer"/>
+                        <s:GridLayer name="overlayLayer"/>
+                    </s:Grid>
+                </s:Scroller>
 
-                    <s:Scroller id="scroller" minViewportInset="1" hasFocusableChildren="false" height="100%">
-                        <!--- @private -->
-                        <s:Grid id="grid" itemRenderer="spark.skins.spark.DefaultGridItemRenderer">
-                            <s:GridLayer name="backgroundLayer"/>
-                            <s:GridLayer name="selectionLayer"/>
-                            <s:GridLayer name="editorIndicatorLayer"/>
-                            <s:GridLayer name="rendererLayer"/>
-                            <s:GridLayer name="overlayLayer"/>
-                        </s:Grid>
-                    </s:Scroller>
-                </s:Group>
+                <s:Line id="lockedSeparator" visible="false" includeInLayout="false">
+                    <s:stroke><s:SolidColorStroke color="0xE6E6E6" weight="1" caps="square"/></s:stroke>
+                </s:Line>
+
+                <s:Scroller id="scroller" minViewportInset="1" hasFocusableChildren="false" height="100%">
+                    <s:Grid id="grid" itemRenderer="spark.skins.spark.DefaultGridItemRenderer">
+                        <s:GridLayer name="backgroundLayer"/>
+                        <s:GridLayer name="selectionLayer"/>
+                        <s:GridLayer name="editorIndicatorLayer"/>
+                        <s:GridLayer name="rendererLayer"/>
+                        <s:GridLayer name="overlayLayer"/>
+                    </s:Grid>
+                </s:Scroller>
             </s:VGroup>
 
         </s:Group>
