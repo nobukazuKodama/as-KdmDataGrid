@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+               xmlns:s="library://ns.adobe.com/flex/spark" 
+               xmlns:mx="library://ns.adobe.com/flex/mx" 
+               xmlns:kdm="jp.co.baykraft.kdm.*">
+
+    <fx:Declarations>
+        <s:ArrayCollection id="lockedList">
+            <s:DataItem seq="" name="ぶりぶり" url="げろげろ"/>
+        </s:ArrayCollection>
+
+        <s:ArrayCollection id="list">
+            <s:DataItem seq="1" name="Apple.inc"  url="http://www.apple.com/jp/"/>
+            <s:DataItem seq="2" name="Amazon"     url="http://www.amazon.co.jp/"/>
+            <s:DataItem seq="3" name="Google"     url="http://www.google.co.jp/"/>
+        </s:ArrayCollection>
+    </fx:Declarations>
+
+    <s:layout><s:VerticalLayout/></s:layout>
+
+    <kdm:KdmDataGrid dataProvider="{list}" width="100%">
+        <kdm:columns>
+            <s:ArrayList>
+                <s:GridColumn dataField="seq" headerText="#"/>
+                <s:GridColumn dataField="name" headerText="なまえ"/>
+                <s:GridColumn dataField="url" headerText="サイト"/>
+            </s:ArrayList>
+        </kdm:columns>
+    </kdm:KdmDataGrid>
+
+    <kdm:KdmDataGrid dataProvider="{list}" lockedDataProvider="{lockedList}" width="100%">
+        <kdm:columns>
+            <s:ArrayList>
+                <s:GridColumn dataField="seq" headerText="#"/>
+                <s:GridColumn dataField="name" headerText="なまえ"/>
+                <s:GridColumn dataField="url" headerText="サイト"/>
+            </s:ArrayList>
+        </kdm:columns>
+    </kdm:KdmDataGrid>
+
+</s:Application>
