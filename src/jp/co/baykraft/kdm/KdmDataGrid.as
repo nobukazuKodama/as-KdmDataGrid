@@ -31,14 +31,17 @@ package jp.co.baykraft.kdm
      *  @see spark.components.DataGrid.
      */
     public class KdmDataGrid extends DataGrid {
-        //----------------------------------
+        //////////////////////////////////////////////////////////////////////
         //  初期値
-        //----------------------------------
-
-        //----------------------------------
+        //////////////////////////////////////////////////////////////////////
+        
+        //////////////////////////////////////////////////////////////////////
         //  その他宣言系
-        //----------------------------------
-
+        //////////////////////////////////////////////////////////////////////
+        
+        //////////////////////////////////////////////////////////////////////
+        //  Skinparts
+        //////////////////////////////////////////////////////////////////////
         //----------------------------------
         // topGrid
         //----------------------------------
@@ -82,9 +85,9 @@ package jp.co.baykraft.kdm
          */
         public var lockedSeparator:Line;
 
-        //----------------------------------
+        //////////////////////////////////////////////////////////////////////
         //  コンストラクタ
-        //----------------------------------
+        //////////////////////////////////////////////////////////////////////
         /**
          *  レイアウトはこんな感じ↓<br/>
          *  ┌───┐<br/>
@@ -99,9 +102,9 @@ package jp.co.baykraft.kdm
             super();
             setStyle("skinClass", XSkinDatagrid);
         }
-        //----------------------------------
+        //////////////////////////////////////////////////////////////////////
         //  override 系の処理
-        //----------------------------------
+        //////////////////////////////////////////////////////////////////////
         /**
          * スキンパーツが追加されたとき
          * @param partName skinpartの名前
@@ -121,7 +124,6 @@ package jp.co.baykraft.kdm
                     topGrid.rowSeparator = rowSeparator;
                     topGrid.hoverIndicator = hoverIndicator;
                     topGrid.selectionIndicator = selectionIndicator;
-                    lazyGridColumnWidth();
                 }
                 else if (instance == topScroller) {
                     visibleLeftScroller = true;
@@ -152,9 +154,9 @@ package jp.co.baykraft.kdm
             super.separator_mouseUpHandler(event);
         }
 
-        //----------------------------------
+        //////////////////////////////////////////////////////////////////////
         //  public 系の処理
-        //----------------------------------
+        //////////////////////////////////////////////////////////////////////
         private var _lockedDataProvider: IList;
         [Bindable(event="lockedDataProviderChange")]
         public function get lockedDataProvider():IList {
@@ -167,21 +169,22 @@ package jp.co.baykraft.kdm
             }
         }
 
-        //----------------------------------
+        //////////////////////////////////////////////////////////////////////
         //  private 系の処理
-        //----------------------------------
+        //////////////////////////////////////////////////////////////////////
         /**
          * 
          * 
          */
         private function lazyGridColumnWidth(): void {
-            if (!grid || !lockedDataProvider)
+            if (!grid || !topGrid || !lockedDataProvider)
                 return;
-            
+
+            var l: IList = topGrid.columns;
             grid.columns.toArray().forEach(function(item:*, index:int, array:Array):void{
-                var col: GridColumn = topGrid.columns.toArray()[index] as GridColumn;
+                var col: GridColumn = l.toArray()[index] as GridColumn;
                 col.width = GridColumn(item).width;
-                topGrid.columns.itemUpdated(col);
+                l.itemUpdated(col);
             });
         }
         /**
