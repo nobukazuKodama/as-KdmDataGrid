@@ -1,16 +1,21 @@
 package jp.co.baykraft.kdm
 {
     import flash.events.Event;
+    import flash.events.MouseEvent;
     
     import jp.co.baykraft.kdm.skin.XSkinLockedDatagrid;
     
     import mx.collections.ArrayList;
     import mx.collections.IList;
+    import mx.core.DragSource;
     import mx.core.IIMESupport;
+    import mx.events.DragEvent;
+    import mx.events.FlexEvent;
+    import mx.managers.DragManager;
     import mx.managers.IFocusManagerComponent;
     
+    import spark.components.Group;
     import spark.components.supportClasses.SkinnableContainerBase;
-    import spark.primitives.Line;
     
     public class LockedDataGrid extends SkinnableContainerBase implements IFocusManagerComponent, IIMESupport {
         //////////////////////////////////////////////////////////////////////
@@ -51,7 +56,7 @@ package jp.co.baykraft.kdm
         /**
          *  データグリッドのセパレータ
          */
-        public var gridSeparator:Line;
+        public var gridSeparator:spark.components.Group;
 
         //////////////////////////////////////////////////////////////////////
         //  コンストラクタ
@@ -63,6 +68,10 @@ package jp.co.baykraft.kdm
             super();
             setStyle("skinClass", XSkinLockedDatagrid);
             this.addEventListener("lockedColumnCountChange", lockedColumnCountChangeHandler);
+            this.addEventListener(FlexEvent.CREATION_COMPLETE, function (e: FlexEvent):void {
+                trace("FlexEvent.CREATION_COMPLETE");
+                dispatchEvent(new Event("lockedColumnCountChange"));
+            });
         }
         //////////////////////////////////////////////////////////////////////
         //  インターフェース
@@ -138,14 +147,17 @@ package jp.co.baykraft.kdm
             trace("partAdded : ", partName);
             if (instance == rightDatagrid) {
                 rightDatagrid.dataProvider = dataProvider;
+                rightDatagrid.columns = _rightColumn;
             }
             if (lockedColumnCount > DEF_LOCKED_COLUMN_COUNT) {
                 if (instance == leftDatagrid) {
                     leftDatagrid.dataProvider = dataProvider;
+                    leftDatagrid.columns = _leftColumn;
                     visibleLeftDatagrid = true;
                 }
                 else if (instance == gridSeparator) {
                     visibleGridSeparator = true;
+                    gridSeparator.addEventListener(MouseEvent.MOUSE_DOWN, gridSeparatorMouseDownHandler);
                 }
             }
         }
@@ -230,8 +242,8 @@ package jp.co.baykraft.kdm
         public function set columns(value:IList):void {
             if (_columns !== value) {
                 _columns = value;
-                _leftColumn = value;
-                _rightColumn = value;
+                _leftColumn = new ArrayList(value.toArray());
+                _rightColumn = new ArrayList(value.toArray());
                 if (leftDatagrid) {
                     leftDatagrid.columns = _leftColumn;
                 }
@@ -281,17 +293,62 @@ package jp.co.baykraft.kdm
         //////////////////////////////////////////////////////////////////////
         //  private 系の処理
         //////////////////////////////////////////////////////////////////////
+        /**
+         * 固定列の左からの列数を変更したら発するかもしれないかもしれないかもしれない
+         * @param event
+         * 
+         */
         private function lockedColumnCountChangeHandler(event: Event): void {
             if (!columns || !_leftColumn || !_rightColumn) {
                 return;
             }
             var array: Array = columns.toArray();
             ArrayList(_leftColumn).source = array.filter(function(item:*, index:int, array:Array):Boolean{
-                return index < _lockedColumnCount;
+                return index < lockedColumnCount;
             });
             ArrayList(_rightColumn).source = array.filter(function(item:*, index:int, array:Array):Boolean{
-                return index >= _lockedColumnCount;
+                return index >= lockedColumnCount;
             });
+        }
+        /**
+         * マウスダウンハンドラ
+         * ドラッグ開始処理をします。
+         * @param event
+         * 
+         */
+        private function gridSeparatorMouseDownHandler(event: MouseEvent): void {
+            trace("まうすダウン");
+            if (!event.buttonDown)
+                return;
+
+            // 
+            if (!hasEventListener(DragEvent.DRAG_ENTER)) {
+                addEventListener(DragEvent.DRAG_ENTER, dragEnterHandler);
+            }
+
+            var dragInitiator:Group = Group(event.currentTarget);
+            var ds:DragSource = new DragSource();
+            ds.addData(dragInitiator, "_gridSeparator");
+            DragManager.doDrag(dragInitiator, ds, event);
+        }
+        private function dragEnterHandler(event: DragEvent): void {
+            if (event.dragSource.hasFormat("_gridSeparator")) {
+                DragManager.acceptDragDrop(leftDatagrid);
+                DragManager.acceptDragDrop(rightDatagrid);
+                leftDatagrid.hasAddEventLister(DragEvent.DRAG_DROP, dragDropHandler);
+                leftDatagrid.hasAddEventLister(DragEvent.DRAG_COMPLETE, dragCompleteHandler);
+                rightDatagrid.hasAddEventLister(DragEvent.DRAG_DROP, dragDropHandler);
+                rightDatagrid.hasAddEventLister(DragEvent.DRAG_COMPLETE, dragCompleteHandler);
+            }
+        }
+        private function dragDropHandler(event: DragEvent): void {
+            if (event.dragSource.hasFormat("_gridSeparator")) {
+                leftDatagrid.width = leftDatagrid.width + event.localX;
+                rightDatagrid.width = rightDatagrid.width - event.localX;
+            }
+        }
+        private function dragCompleteHandler(event: DragEvent): void {
+            trace("dragCompleteHandler[", event.currentTarget, "]");
         }
         private function get visibleLeftDatagrid(): Boolean {
             return leftDatagrid.visible;

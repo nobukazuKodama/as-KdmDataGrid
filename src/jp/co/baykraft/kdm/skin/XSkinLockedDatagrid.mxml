@@ -16,7 +16,7 @@
     <!-- SkinParts
     name=rightGrid, type=jp.co.baykraft.kdm.KdmDataGrid, required=false
     name=leftGrid, type=jp.co.baykraft.kdm.KdmDataGrid, required=false
-    name=gridSeparator, type=spark.primitives.Line, required=false
+    name=gridSeparator, type=spark.components.Group, required=false
     -->
 
     <s:Group width="100%" height="100%">
@@ -25,9 +25,10 @@
                          lockedDataProvider="{hostComponent.lockedDataProvider}" 
                          columns="{hostComponent.columns}"
                          visible="false" includeInLayout="false"/>
-        <s:Line id="gridSeparator" visible="false" includeInLayout="false">
-            <s:stroke><s:SolidColorStroke color="0xE6E6E6" weight="1" caps="square"/></s:stroke>
-        </s:Line>
+        <s:Group id="gridSeparator" visible="false" includeInLayout="false" height="100%"
+                 buttonMode="true" useHandCursor="true" mouseChildren="false">
+            <s:Line><s:stroke><s:SolidColorStroke id="spLine" color="0xE6E6E6" weight="5" caps="square"/></s:stroke></s:Line>
+        </s:Group>
         <kdm:KdmDataGrid id="rightDatagrid"  height="100%" 
                          lockedDataProvider="{hostComponent.lockedDataProvider}" 
                          columns="{hostComponent.columns}"/>

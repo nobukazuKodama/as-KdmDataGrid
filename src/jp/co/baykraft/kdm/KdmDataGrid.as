@@ -133,6 +133,11 @@ package jp.co.baykraft.kdm
                 }
             }
         }
+        override public function set columns(value:IList):void {
+            super.columns = value;
+            if (topGrid) 
+                topGrid.columns = super.columns;
+        }
         override protected function columnHeaderGroup_clickHandler(event:GridEvent):void {
             super.columnHeaderGroup_clickHandler(event);
         }
@@ -168,6 +173,24 @@ package jp.co.baykraft.kdm
                 dispatchEvent(new Event("lockedDataProviderChange"));
             }
         }
+        /**
+         *  type に関連づくイベントハンドラがなければ、イベントを add する
+         * 
+         * @param type 
+         * @param listener 
+         * @param useCapture 
+         * @param priority 
+         * @param useWeakReference 
+         * 
+         */
+        public function hasAddEventLister(
+            type:String, listener:Function, useCapture:Boolean=false, priority:int=0, useWeakReference:Boolean=false): void {
+            if (hasEventListener(type))
+                return;
+
+            addEventListener(type, listener, useCapture, priority, useWeakReference);
+        }
+
 
         //////////////////////////////////////////////////////////////////////
         //  private 系の処理
