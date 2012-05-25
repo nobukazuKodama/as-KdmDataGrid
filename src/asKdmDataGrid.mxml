@@ -18,26 +18,6 @@
 
     <s:layout><s:VerticalLayout/></s:layout>
 
-    <kdm:KdmDataGrid dataProvider="{list}" width="100%">
-        <kdm:columns>
-            <s:ArrayList>
-                <s:GridColumn dataField="seq" headerText="#"/>
-                <s:GridColumn dataField="name" headerText="なまえ"/>
-                <s:GridColumn dataField="url" headerText="サイト"/>
-            </s:ArrayList>
-        </kdm:columns>
-    </kdm:KdmDataGrid>
-
-    <kdm:KdmDataGrid dataProvider="{list}" lockedDataProvider="{lockedList}" width="100%">
-        <kdm:columns>
-            <s:ArrayList>
-                <s:GridColumn dataField="seq" headerText="#"/>
-                <s:GridColumn dataField="name" headerText="なまえ"/>
-                <s:GridColumn dataField="url" headerText="サイト"/>
-            </s:ArrayList>
-        </kdm:columns>
-    </kdm:KdmDataGrid>
-
     <kdm:LockedDataGrid  dataProvider="{list}" 
                          lockedDataProvider="{lockedList}" 
                          lockedColumnCount="1"

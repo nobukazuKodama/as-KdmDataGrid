@@ -22,6 +22,7 @@ package jp.co.baykraft.kdm
         //  初期値
         //////////////////////////////////////////////////////////////////////
         private static const DEF_LOCKED_COLUMN_COUNT: Number = 0;
+        private static const MINIMAM_DATAGRID_SIZE: Number = 30;
         //////////////////////////////////////////////////////////////////////
         //  その他宣言系
         //////////////////////////////////////////////////////////////////////
@@ -302,10 +303,12 @@ package jp.co.baykraft.kdm
             if (!columns || !_leftColumn || !_rightColumn) {
                 return;
             }
+            // lockedColumnCount の数がインデックスより小さいものは固定列として、左側のデータグリッド列へ
             var array: Array = columns.toArray();
             ArrayList(_leftColumn).source = array.filter(function(item:*, index:int, array:Array):Boolean{
                 return index < lockedColumnCount;
             });
+            // lockedColumnCount 以上のインデックスは非固定列として、右側のデータグリッド列へ
             ArrayList(_rightColumn).source = array.filter(function(item:*, index:int, array:Array):Boolean{
                 return index >= lockedColumnCount;
             });
@@ -331,7 +334,15 @@ package jp.co.baykraft.kdm
             ds.addData(dragInitiator, "_gridSeparator");
             DragManager.doDrag(dragInitiator, ds, event);
         }
+        /**
+         * ドラッグエンターハンドラ
+         *  ドロップ対象を受け入れ可能な状態にするコンポーネントの指定をする。
+         *  左側グリッドと右側グリッドに対し、イベントの付与をする
+         * @param event
+         * 
+         */
         private function dragEnterHandler(event: DragEvent): void {
+            // 判定はこのコンポーネントに独自ドロップEnterの時に判定させないため
             if (event.dragSource.hasFormat("_gridSeparator")) {
                 DragManager.acceptDragDrop(leftDatagrid);
                 DragManager.acceptDragDrop(rightDatagrid);
@@ -341,10 +352,27 @@ package jp.co.baykraft.kdm
                 rightDatagrid.hasAddEventLister(DragEvent.DRAG_COMPLETE, dragCompleteHandler);
             }
         }
+        /**
+         *  ドロップハンドラ
+         *  @TODO 要検討 public にすべきか private のままでいいか？
+         * @param event 
+         */
         private function dragDropHandler(event: DragEvent): void {
             if (event.dragSource.hasFormat("_gridSeparator")) {
-                leftDatagrid.width = leftDatagrid.width + event.localX;
-                rightDatagrid.width = rightDatagrid.width - event.localX;
+                var leftWidth: Number = leftDatagrid.width + event.localX;
+                var rightWidth: Number = rightDatagrid.width - event.localX;
+                // 最小値未満の時のサイズ調整処理
+                // ★をコメントアウトすれば分かるけど、↑で計算したまんまの値をそこに入れると「最小値 - サイズ」分データグリッドのサイズがでかくなる
+                if (leftWidth < MINIMAM_DATAGRID_SIZE) {
+                    rightWidth = rightWidth - (MINIMAM_DATAGRID_SIZE - leftWidth);     // ★
+                    leftWidth = MINIMAM_DATAGRID_SIZE;
+                }
+                if (rightWidth < MINIMAM_DATAGRID_SIZE) {
+                    leftWidth = leftWidth - (MINIMAM_DATAGRID_SIZE - rightWidth);      // ★
+                    rightWidth = MINIMAM_DATAGRID_SIZE;
+                }
+                leftDatagrid.width = leftWidth;
+                rightDatagrid.width = rightWidth;
             }
         }
         private function dragCompleteHandler(event: DragEvent): void {

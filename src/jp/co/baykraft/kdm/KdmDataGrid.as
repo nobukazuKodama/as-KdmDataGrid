@@ -7,12 +7,18 @@ package jp.co.baykraft.kdm
     import mx.collections.ArrayList;
     import mx.collections.IList;
     import mx.events.FlexEvent;
+    import mx.events.ScrollEvent;
     
     import spark.components.DataGrid;
+    import spark.components.HScrollBar;
     import spark.components.Scroller;
+    import spark.components.VScrollBar;
     import spark.components.gridClasses.GridColumn;
+    import spark.components.supportClasses.ScrollBarBase;
+    import spark.components.supportClasses.TrackBase;
     import spark.events.GridCaretEvent;
     import spark.events.GridEvent;
+    import spark.events.TrackBaseEvent;
     import spark.primitives.Line;
     
     /** 
@@ -115,6 +121,9 @@ package jp.co.baykraft.kdm
             if (instance == grid) {
                 grid.columns = super.columns;
             }
+            else if (instance == scroller) {
+                scroller.horizontalScrollBar.addEventListener(Event.CHANGE, scrollChangeHandler);
+            }
             if (lockedDataProvider) {
                 if (instance == topGrid) {
                     visibleLeftGrid = true;
@@ -195,8 +204,18 @@ package jp.co.baykraft.kdm
         //////////////////////////////////////////////////////////////////////
         //  private 系の処理
         //////////////////////////////////////////////////////////////////////
+        private function scrollChangeHandler(event: Event): void {
+            if (topGrid && lockedDataProvider.length > 0) {
+                if (event.currentTarget is HScrollBar) {
+                    topGrid.horizontalScrollPosition = HScrollBar(event.currentTarget).value;
+                }
+                else if (event.currentTarget is VScrollBar) {
+                    topGrid.verticalScrollPosition = VScrollBar(event.currentTarget).value;
+                }
+            }
+        }
         /**
-         * 
+         * lazyとかいっているけど遅延評価じゃねーし
          * 
          */
         private function lazyGridColumnWidth(): void {
@@ -205,10 +224,31 @@ package jp.co.baykraft.kdm
 
             var l: IList = topGrid.columns;
             grid.columns.toArray().forEach(function(item:*, index:int, array:Array):void{
+                var w: Number = GridColumn(item).width;
+                if (isNaN(w)) {
+                    trace("\t", topGrid.width);
+                    w = topGrid.width - gridColumnsWidthPlus(l);
+                }
                 var col: GridColumn = l.toArray()[index] as GridColumn;
-                col.width = GridColumn(item).width;
+                trace(col.headerText, "w", w);
+                col.width = w;
                 l.itemUpdated(col);
             });
+        }
+        private function gridColumnsWidthPlus(list: IList, defNum: Number=0): Number {
+            var array: Array = list.toArray().filter(function callback(item:*, index:int, array:Array):Boolean{
+                return !isNaN(item.width);
+            }).map(function(itm:*, idx:int, arr:Array):String{
+                return itm.width;
+            });
+            trace(array.join(","));
+            const ref: Function = function(def: *, ary: Array): Number {
+                if (ary.length > 0) {
+                    return def + ref(ary.shift(), ary);
+                }
+                return def;
+            };
+            return ref(defNum, array);
         }
         /**
          * 
