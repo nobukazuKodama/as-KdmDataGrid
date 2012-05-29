@@ -12,7 +12,11 @@
         <s:ArrayCollection id="list">
             <s:DataItem seq="1" name="Apple.inc"  url="http://www.apple.com/jp/"/>
             <s:DataItem seq="2" name="Amazon"     url="http://www.amazon.co.jp/"/>
-            <s:DataItem seq="3" name="Google"     url="http://www.google.co.jp/"/>
+            <s:DataItem seq="3" name="Adobe"      url="http://help.adobe.com/ja_JP/flashbuilder/using/index.html"/>
+            <s:DataItem seq="4" name="asDoc"      url="http://help.adobe.com/ja_JP/FlashPlatform/reference/actionscript/3/package-summary.html"/>
+            <s:DataItem seq="5" name="Google"     url="http://www.google.co.jp/"/>
+            <s:DataItem seq="6" name="Example"    url="http://www.example.com/"/>
+            <s:DataItem seq="7" name="W3C"        url="http://www.w3.org/"/>
         </s:ArrayCollection>
     </fx:Declarations>
 
@@ -21,7 +25,8 @@
     <kdm:LockedDataGrid  dataProvider="{list}" 
                          lockedDataProvider="{lockedList}" 
                          lockedColumnCount="1"
-                         width="100%">
+                         width="100%"
+                         >
         <kdm:columns>
             <s:ArrayList>
                 <s:GridColumn dataField="seq" headerText="#"/>

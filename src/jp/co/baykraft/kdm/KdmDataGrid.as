@@ -40,7 +40,7 @@ package jp.co.baykraft.kdm
         //////////////////////////////////////////////////////////////////////
         //  初期値
         //////////////////////////////////////////////////////////////////////
-        
+        private static const DEFAULT_REQUEST_ROW_COUNT: Number = 5;  // requestedRowCount
         //////////////////////////////////////////////////////////////////////
         //  その他宣言系
         //////////////////////////////////////////////////////////////////////
@@ -107,6 +107,7 @@ package jp.co.baykraft.kdm
         public function KdmDataGrid() {
             super();
             setStyle("skinClass", XSkinDatagrid);
+            requestedRowCount = DEFAULT_REQUEST_ROW_COUNT;
         }
         //////////////////////////////////////////////////////////////////////
         //  override 系の処理
@@ -199,7 +200,14 @@ package jp.co.baykraft.kdm
 
             addEventListener(type, listener, useCapture, priority, useWeakReference);
         }
-
+        /**
+         *  縦スクロールバー取得
+         * @return 
+         * 
+         */
+        public function get scrollerVertivalBar(): VScrollBar {
+            return scroller.verticalScrollBar;
+        }
 
         //////////////////////////////////////////////////////////////////////
         //  private 系の処理
@@ -210,45 +218,54 @@ package jp.co.baykraft.kdm
                     topGrid.horizontalScrollPosition = HScrollBar(event.currentTarget).value;
                 }
                 else if (event.currentTarget is VScrollBar) {
-                    topGrid.verticalScrollPosition = VScrollBar(event.currentTarget).value;
+                    scroller.dispatchEvent(event);
                 }
             }
         }
         /**
          * lazyとかいっているけど遅延評価じゃねーし
-         * 
+         *  grid の各列幅を topGrid にも反映させる。
          */
         private function lazyGridColumnWidth(): void {
             if (!grid || !topGrid || !lockedDataProvider)
                 return;
 
             var l: IList = topGrid.columns;
+            // 各列に対して (forEach) 無名関数を実行
             grid.columns.toArray().forEach(function(item:*, index:int, array:Array):void{
-                var w: Number = GridColumn(item).width;
-                if (isNaN(w)) {
-                    trace("\t", topGrid.width);
-                    w = topGrid.width - gridColumnsWidthPlus(l);
+                var w: Number = GridColumn(item).width;                 // grid の列幅
+                if (isNaN(w)) {                                         // 値が NaN の時
+                    w = grid.width - gridColumnsWidthPlus(l);           // grid 全体の幅より NaN を含まない幅の合計を引いたもの
                 }
                 var col: GridColumn = l.toArray()[index] as GridColumn;
-                trace(col.headerText, "w", w);
                 col.width = w;
                 l.itemUpdated(col);
             });
         }
+        /**
+         * リスト内の width を全部足す。初期値は defNum。
+         * 値が NaN だったときは足す対象としない。
+         *   TODO 足す対象の properties も外から指定させるべきか？
+         * @param list 計算対象リスト
+         * @param defNum 初期値
+         * @return 計算結果
+         * 
+         */
         private function gridColumnsWidthPlus(list: IList, defNum: Number=0): Number {
-            var array: Array = list.toArray().filter(function callback(item:*, index:int, array:Array):Boolean{
+            // 値が NaN でないものだけをフィルターして、マップでそれぞれの width だけのリストにする。
+            var array: Array = list.toArray().filter(function(item:*, index:int, array:Array):Boolean{
                 return !isNaN(item.width);
             }).map(function(itm:*, idx:int, arr:Array):String{
                 return itm.width;
             });
-            trace(array.join(","));
-            const ref: Function = function(def: *, ary: Array): Number {
+            // 「フィルタリングされたリストから値を取り出し再帰的に足していく」関数の宣言
+            const ref: Function = function(def: Number, ary: Array): Number {
                 if (ary.length > 0) {
                     return def + ref(ary.shift(), ary);
                 }
                 return def;
             };
-            return ref(defNum, array);
+            return ref(defNum, array);           // 宣言した関数の呼び出し
         }
         /**
          * 

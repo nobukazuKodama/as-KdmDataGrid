@@ -8,14 +8,21 @@ package jp.co.baykraft.kdm
     import mx.collections.ArrayList;
     import mx.collections.IList;
     import mx.core.DragSource;
+    import mx.core.IFactory;
     import mx.core.IIMESupport;
     import mx.events.DragEvent;
     import mx.events.FlexEvent;
     import mx.managers.DragManager;
     import mx.managers.IFocusManagerComponent;
     
+    import spark.components.DataGrid;
+    import spark.components.Grid;
     import spark.components.Group;
+    import spark.components.HScrollBar;
+    import spark.components.VScrollBar;
     import spark.components.supportClasses.SkinnableContainerBase;
+    import spark.events.GridEvent;
+    import spark.events.GridSelectionEvent;
     
     public class LockedDataGrid extends SkinnableContainerBase implements IFocusManagerComponent, IIMESupport {
         //////////////////////////////////////////////////////////////////////
@@ -147,11 +154,17 @@ package jp.co.baykraft.kdm
             super.partAdded(partName, instance);
             trace("partAdded : ", partName);
             if (instance == rightDatagrid) {
+                rightDatagrid.addEventListener(GridSelectionEvent.SELECTION_CHANGING, rightDatagridSelectionHandler);
+                rightDatagrid.addEventListener(GridEvent.GRID_ROLL_OVER, rightDatagridRollOverHandler);
+                rightDatagrid.scrollerVertivalBar.addEventListener(Event.CHANGE, rightDatagridVScrollHandler);
                 rightDatagrid.dataProvider = dataProvider;
                 rightDatagrid.columns = _rightColumn;
             }
             if (lockedColumnCount > DEF_LOCKED_COLUMN_COUNT) {
                 if (instance == leftDatagrid) {
+                    leftDatagrid.addEventListener(GridSelectionEvent.SELECTION_CHANGING, leftDatagridSelectionHandler);
+                    leftDatagrid.addEventListener(GridEvent.GRID_ROLL_OVER, leftDatagridRollOverHandler);
+                    leftDatagrid.scrollerVertivalBar.addEventListener(Event.CHANGE, leftDatagridVScrollHandler);
                     leftDatagrid.dataProvider = dataProvider;
                     leftDatagrid.columns = _leftColumn;
                     visibleLeftDatagrid = true;
@@ -295,6 +308,75 @@ package jp.co.baykraft.kdm
         //  private 系の処理
         //////////////////////////////////////////////////////////////////////
         /**
+         * 左側グリッドのロールオーバハンドラ
+         * @param event
+         * 
+         */
+        private function leftDatagridRollOverHandler(event: GridEvent): void {
+            if (!rightDatagrid) {
+                return;
+            }
+            rightDatagrid.grid.hoverRowIndex = event.rowIndex;
+        }
+        /**
+         * 右側グリッドのロールオーバハンドラ
+         * @param event
+         * 
+         */
+        private function rightDatagridRollOverHandler(event: GridEvent): void {
+            if (!leftDatagrid) {
+                return;
+            }
+            leftDatagrid.grid.hoverRowIndex = event.rowIndex;
+        }
+        /**
+         * 左側データグリッドの選択を、右側データグリッドに反映
+         * @param event 
+         * 
+         */
+        private function leftDatagridSelectionHandler(event: GridSelectionEvent): void {
+            if (!rightDatagrid) {
+                return;
+            }
+            rightDatagrid.selectedIndex = event.selectionChange.rowIndex;
+        }
+        /**
+         * 右側データグリッドの選択を、左側データグリッドに反映
+         * @param event 
+         */
+        private function rightDatagridSelectionHandler(event: GridSelectionEvent): void {
+            if (!leftDatagrid) {
+                return;
+            }
+            leftDatagrid.selectedIndex = event.selectionChange.rowIndex;
+        }
+        /**
+         * 左側スクロールチェンジハンドラ
+         * @param event
+         * 
+         */
+        private function leftDatagridVScrollHandler(event: Event): void {
+            if (!rightDatagrid) {
+                return;
+            }
+            if (event.currentTarget is VScrollBar) {
+                rightDatagrid.grid.verticalScrollPosition = VScrollBar(event.currentTarget).value;
+            }
+        }
+        /**
+         * 右側スクロールチェンジハンドラ
+         * @param event
+         * 
+         */
+        private function rightDatagridVScrollHandler(event: Event): void {
+            if (!leftDatagrid) {
+                return;
+            }
+            if (event.currentTarget is VScrollBar) {
+                leftDatagrid.grid.verticalScrollPosition = VScrollBar(event.currentTarget).value;
+            }
+        }
+        /**
          * 固定列の左からの列数を変更したら発するかもしれないかもしれないかもしれない
          * @param event
          * 
@@ -342,7 +424,7 @@ package jp.co.baykraft.kdm
          * 
          */
         private function dragEnterHandler(event: DragEvent): void {
-            // 判定はこのコンポーネントに独自ドロップEnterの時に判定させないため
+            // 判定はこのコンポーネントに独自ドロップ Enter の時に判定させないため
             if (event.dragSource.hasFormat("_gridSeparator")) {
                 DragManager.acceptDragDrop(leftDatagrid);
                 DragManager.acceptDragDrop(rightDatagrid);
