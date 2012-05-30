@@ -24,9 +24,10 @@
         <kdm:KdmDataGrid id="leftDatagrid" 
                          lockedDataProvider="{hostComponent.lockedDataProvider}" 
                          columns="{hostComponent.columns}"
+                         verticalScrollPolicy="off"
                          visible="false" includeInLayout="false"/>
         <s:Group id="gridSeparator" visible="false" includeInLayout="false" height="100%"
-                 buttonMode="true" useHandCursor="true" mouseChildren="false">
+                 buttonMode="true" useHandCursor="true" mouseChildren="true">
             <s:Line><s:stroke><s:SolidColorStroke id="spLine" color="0xE6E6E6" weight="5" caps="square"/></s:stroke></s:Line>
         </s:Group>
         <kdm:KdmDataGrid id="rightDatagrid" 

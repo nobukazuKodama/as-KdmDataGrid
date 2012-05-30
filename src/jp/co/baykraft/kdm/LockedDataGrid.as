@@ -24,12 +24,27 @@ package jp.co.baykraft.kdm
     import spark.events.GridEvent;
     import spark.events.GridSelectionEvent;
     
+    [Event(name="lockedDataProviderChange", type="flash.events.Event")]
+    [Event(name="lockedColumnCountChange", type="flash.events.Event")]
+    [Event(name="columnsChange", type="flash.events.Event")]
+    [Event(name="dropableFlgChange", type="flash.events.Event")]
+    [Event(name="requestedRowCountChange", type="flash.events.Event")]
+    /**
+     * 
+     * @author knob8
+     * 
+     */
     public class LockedDataGrid extends SkinnableContainerBase implements IFocusManagerComponent, IIMESupport {
         //////////////////////////////////////////////////////////////////////
         //  初期値
         //////////////////////////////////////////////////////////////////////
-        private static const DEF_LOCKED_COLUMN_COUNT: Number = 0;
-        private static const MINIMAM_DATAGRID_SIZE: Number = 30;
+        private static const DEF_LOCKED_COLUMN_COUNT: Number = 0;    // 固定列の行数
+        private static const MINIMAM_DATAGRID_SIZE: Number = 30;     // サイズ変更時の最低サイズ
+        /**
+         * requestedRowCount の初期値
+         * 5
+         */
+        private static const DEFAULT_REQUEST_ROW_COUNT: Number = 5;
         //////////////////////////////////////////////////////////////////////
         //  その他宣言系
         //////////////////////////////////////////////////////////////////////
@@ -156,17 +171,21 @@ package jp.co.baykraft.kdm
             if (instance == rightDatagrid) {
                 rightDatagrid.addEventListener(GridSelectionEvent.SELECTION_CHANGING, rightDatagridSelectionHandler);
                 rightDatagrid.addEventListener(GridEvent.GRID_ROLL_OVER, rightDatagridRollOverHandler);
+                rightDatagrid.grid.addEventListener("hoverRowIndexChanged", rightDatagridHoverRowIndexHandler);
                 rightDatagrid.scrollerVertivalBar.addEventListener(Event.CHANGE, rightDatagridVScrollHandler);
                 rightDatagrid.dataProvider = dataProvider;
                 rightDatagrid.columns = _rightColumn;
+                rightDatagrid.requestedRowCount = requestedRowCount;
             }
             if (lockedColumnCount > DEF_LOCKED_COLUMN_COUNT) {
                 if (instance == leftDatagrid) {
                     leftDatagrid.addEventListener(GridSelectionEvent.SELECTION_CHANGING, leftDatagridSelectionHandler);
                     leftDatagrid.addEventListener(GridEvent.GRID_ROLL_OVER, leftDatagridRollOverHandler);
+                    leftDatagrid.grid.addEventListener("hoverRowIndexChanged", leftDatagridHoverRowIndexHandler);
                     leftDatagrid.scrollerVertivalBar.addEventListener(Event.CHANGE, leftDatagridVScrollHandler);
                     leftDatagrid.dataProvider = dataProvider;
                     leftDatagrid.columns = _leftColumn;
+                    leftDatagrid.requestedRowCount = requestedRowCount;
                     visibleLeftDatagrid = true;
                 }
                 else if (instance == gridSeparator) {
@@ -303,6 +322,34 @@ package jp.co.baykraft.kdm
                 dispatchEvent(new Event("dropableFlgChange"));
             }
         }
+        private var _requestedRowCount: Number = DEFAULT_REQUEST_ROW_COUNT;
+        [Bindable(event="requestedRowCountChange")]
+        /**
+         * 初期表示行数 spark.components.DataGrid では初期値は「-1」だが、このコンポートネントでは、
+         * jp.co.baykraft.kdm.LockedDataGrid#DEFAULT_REQUEST_ROW_COUNT
+         * 
+         * @see spark.components.DataGrid#requestedRowCount
+         * @see jp.co.baykraft.kdm.LockedDataGrid#DEFAULT_REQUEST_ROW_COUNT
+         */
+        public function get requestedRowCount():Number {
+            return _requestedRowCount;
+        }
+        /**
+         * @private
+         */
+        public function set requestedRowCount(value:Number):void {
+            if　(_requestedRowCount !== value) {
+                _requestedRowCount = value;
+                if (leftDatagrid) {
+                    leftDatagrid.requestedRowCount = value;
+                }
+                if (rightDatagrid) {
+                    rightDatagrid.requestedRowCount = value;
+                }
+                dispatchEvent(new Event("requestedRowCountChange"));
+            }
+        }
+
 
         //////////////////////////////////////////////////////////////////////
         //  private 系の処理
@@ -313,7 +360,7 @@ package jp.co.baykraft.kdm
          * 
          */
         private function leftDatagridRollOverHandler(event: GridEvent): void {
-            if (!rightDatagrid) {
+            if (event.buttonDown || !rightDatagrid || (event.target == leftDatagrid.topGrid)) {
                 return;
             }
             rightDatagrid.grid.hoverRowIndex = event.rowIndex;
@@ -324,10 +371,32 @@ package jp.co.baykraft.kdm
          * 
          */
         private function rightDatagridRollOverHandler(event: GridEvent): void {
-            if (!leftDatagrid) {
+            if (event.buttonDown || !leftDatagrid || (event.target == rightDatagrid.topGrid)) {
                 return;
             }
             leftDatagrid.grid.hoverRowIndex = event.rowIndex;
+        }
+        /**
+         *  TODO 結果的に再帰処理がされない実装になっているが、論理的にそれを塞ぐ実装を考慮したいけど、アーキテクトが思いつかない
+         * @param event 
+         */
+        private function leftDatagridHoverRowIndexHandler(event: Event): void {
+            trace("TODO...left :", event.currentTarget);
+            if (Grid(event.currentTarget).hoverRowIndex < 0) {
+                rightDatagrid.grid.hoverRowIndex = -1;
+                rightDatagrid.grid.hoverColumnIndex = -1;
+            }
+        }
+        /**
+         *  TODO 結果的に再帰処理がされない実装になっているが、論理的にそれを塞ぐ実装を考慮したいけど、アーキテクトが思いつかない
+         * @param event 
+         */
+        private function rightDatagridHoverRowIndexHandler(event: Event): void {
+            trace("TODO...right :", event.currentTarget);
+            if (Grid(event.currentTarget).hoverRowIndex < 0) {
+                leftDatagrid.grid.hoverRowIndex = -1;
+                leftDatagrid.grid.hoverColumnIndex = -1;
+            }
         }
         /**
          * 左側データグリッドの選択を、右側データグリッドに反映

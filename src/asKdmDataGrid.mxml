@@ -6,17 +6,24 @@
 
     <fx:Declarations>
         <s:ArrayCollection id="lockedList">
-            <s:DataItem seq="" name="たゆんたゆん" url="げふんげふん"/>
+            <s:DataItem seq="" name="たゆんたゆん" url="げふんげふん" note="ぷりんぷりん" />
         </s:ArrayCollection>
 
         <s:ArrayCollection id="list">
-            <s:DataItem seq="1" name="Apple.inc"  url="http://www.apple.com/jp/"/>
-            <s:DataItem seq="2" name="Amazon"     url="http://www.amazon.co.jp/"/>
-            <s:DataItem seq="3" name="Adobe"      url="http://help.adobe.com/ja_JP/flashbuilder/using/index.html"/>
-            <s:DataItem seq="4" name="asDoc"      url="http://help.adobe.com/ja_JP/FlashPlatform/reference/actionscript/3/package-summary.html"/>
-            <s:DataItem seq="5" name="Google"     url="http://www.google.co.jp/"/>
-            <s:DataItem seq="6" name="Example"    url="http://www.example.com/"/>
-            <s:DataItem seq="7" name="W3C"        url="http://www.w3.org/"/>
+            <s:DataItem seq="1" name="Apple.inc"  url="http://www.apple.com/jp/" 
+                        note="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"/>
+            <s:DataItem seq="2" name="Amazon"     url="http://www.amazon.co.jp/" 
+                        note="あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん"/>
+            <s:DataItem seq="3" name="Adobe"      url="http://help.adobe.com/ja_JP/flashbuilder/using/index.html" 
+                        note="アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン"/>
+            <s:DataItem seq="4" name="asDoc"      url="http://help.adobe.com/ja_JP/FlashPlatform/reference/actionscript/3/package-summary.html" 
+                        note="ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝ"/>
+            <s:DataItem seq="5" name="Google"     url="http://www.google.co.jp/" 
+                        note="がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ"/>
+            <s:DataItem seq="6" name="Example"    url="http://www.example.com/" 
+                        note="ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポ"/>
+            <s:DataItem seq="7" name="W3C"        url="http://www.w3.org/" 
+                        note="ｶﾞｷﾞｸﾞｹﾞｺﾞｻﾞｼﾞｽﾞｾﾞｿﾞﾀﾞﾁﾞﾂﾞﾃﾞﾄﾞﾊﾞﾋﾞﾌﾞﾍﾞﾎﾞﾊﾟﾋﾟﾌﾟﾍﾟﾎﾟ"/>
         </s:ArrayCollection>
     </fx:Declarations>
 
@@ -32,6 +39,7 @@
                 <s:GridColumn dataField="seq" headerText="#"/>
                 <s:GridColumn dataField="name" headerText="なまえ"/>
                 <s:GridColumn dataField="url" headerText="サイト"/>
+                <s:GridColumn dataField="note" headerText="めも"/>
             </s:ArrayList>
         </kdm:columns>
     </kdm:LockedDataGrid>
