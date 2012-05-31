@@ -29,11 +29,23 @@
 
     <s:layout><s:VerticalLayout/></s:layout>
 
-    <kdm:LockedDataGrid  dataProvider="{list}" 
-                         lockedDataProvider="{lockedList}" 
-                         lockedColumnCount="1"
-                         width="100%"
-                         >
+    <kdm:LockedDataGrid dataProvider="{list}" 
+                        lockedDataProvider="{lockedList}" 
+                        lockedColumnCount="1"
+                        dragEnabled="true"
+                        width="100%">
+        <kdm:columns>
+            <s:ArrayList>
+                <s:GridColumn dataField="seq" headerText="#"/>
+                <s:GridColumn dataField="name" headerText="なまえ"/>
+                <s:GridColumn dataField="url" headerText="サイト"/>
+                <s:GridColumn dataField="note" headerText="めも"/>
+            </s:ArrayList>
+        </kdm:columns>
+    </kdm:LockedDataGrid>
+    
+    <kdm:LockedDataGrid dropEnabled="true"
+                        width="100%">
         <kdm:columns>
             <s:ArrayList>
                 <s:GridColumn dataField="seq" headerText="#"/>

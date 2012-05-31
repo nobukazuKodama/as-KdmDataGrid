@@ -221,7 +221,7 @@ declarations define DataGrid skin parts except <code>headerColumnSeparator</code
                     <s:stroke><s:SolidColorStroke color="0x696969" weight="1" caps="square"/></s:stroke>
                 </s:Line>
 
-                <s:Scroller id="topScroller" minViewportInset="1" hasFocusableChildren="false"
+                <s:Scroller id="topScroller" minViewportInset="1" hasFocusableChildren="false" 
                             visible="false" includeInLayout="false" horizontalScrollPolicy="off" verticalScrollPolicy="off">
                     <s:Grid id="topGrid" itemRenderer="spark.skins.spark.DefaultGridItemRenderer">
                         <s:GridLayer name="backgroundLayer"/>

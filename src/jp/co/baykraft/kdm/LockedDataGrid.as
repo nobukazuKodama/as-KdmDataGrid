@@ -5,21 +5,23 @@ package jp.co.baykraft.kdm
     
     import jp.co.baykraft.kdm.skin.XSkinLockedDatagrid;
     
+    import mx.collections.ArrayCollection;
     import mx.collections.ArrayList;
     import mx.collections.IList;
     import mx.core.DragSource;
-    import mx.core.IFactory;
+    import mx.core.IFlexDisplayObject;
     import mx.core.IIMESupport;
     import mx.events.DragEvent;
     import mx.events.FlexEvent;
     import mx.managers.DragManager;
     import mx.managers.IFocusManagerComponent;
     
-    import spark.components.DataGrid;
     import spark.components.Grid;
     import spark.components.Group;
-    import spark.components.HScrollBar;
+    import spark.components.Label;
     import spark.components.VScrollBar;
+    import spark.components.gridClasses.GridColumn;
+    import spark.components.gridClasses.IGridItemRenderer;
     import spark.components.supportClasses.SkinnableContainerBase;
     import spark.events.GridEvent;
     import spark.events.GridSelectionEvent;
@@ -27,14 +29,19 @@ package jp.co.baykraft.kdm
     [Event(name="lockedDataProviderChange", type="flash.events.Event")]
     [Event(name="lockedColumnCountChange", type="flash.events.Event")]
     [Event(name="columnsChange", type="flash.events.Event")]
-    [Event(name="dropableFlgChange", type="flash.events.Event")]
     [Event(name="requestedRowCountChange", type="flash.events.Event")]
     /**
      * 
-     * @author knob8
+     * @author nbkz.kdm
      * 
      */
     public class LockedDataGrid extends SkinnableContainerBase implements IFocusManagerComponent, IIMESupport {
+        /**
+         *  この LockedDataGrid に Drag & Drop 処理をするときのフォーマット名
+         *  
+         *  @see mx.core.DragSource#addHandler
+         */
+        public static const CALL_DRAG_DROP_FORMAT: String = "_drag&DropItem";
         //////////////////////////////////////////////////////////////////////
         //  初期値
         //////////////////////////////////////////////////////////////////////
@@ -45,6 +52,7 @@ package jp.co.baykraft.kdm
          * 5
          */
         private static const DEFAULT_REQUEST_ROW_COUNT: Number = 5;
+        private static const HOVER_UNSELECTED: Number = -1;         // hoverRowIndex
         //////////////////////////////////////////////////////////////////////
         //  その他宣言系
         //////////////////////////////////////////////////////////////////////
@@ -90,11 +98,8 @@ package jp.co.baykraft.kdm
         public function LockedDataGrid() {
             super();
             setStyle("skinClass", XSkinLockedDatagrid);
+            this.addEventListener(FlexEvent.CREATION_COMPLETE, creationCompleteHandler);
             this.addEventListener("lockedColumnCountChange", lockedColumnCountChangeHandler);
-            this.addEventListener(FlexEvent.CREATION_COMPLETE, function (e: FlexEvent):void {
-                trace("FlexEvent.CREATION_COMPLETE");
-                dispatchEvent(new Event("lockedColumnCountChange"));
-            });
         }
         //////////////////////////////////////////////////////////////////////
         //  インターフェース
@@ -173,6 +178,7 @@ package jp.co.baykraft.kdm
                 rightDatagrid.addEventListener(GridEvent.GRID_ROLL_OVER, rightDatagridRollOverHandler);
                 rightDatagrid.grid.addEventListener("hoverRowIndexChanged", rightDatagridHoverRowIndexHandler);
                 rightDatagrid.scrollerVertivalBar.addEventListener(Event.CHANGE, rightDatagridVScrollHandler);
+                rightDatagrid.addEventListener(GridEvent.GRID_MOUSE_DRAG, rightDatagridGridMouseDragHandler);
                 rightDatagrid.dataProvider = dataProvider;
                 rightDatagrid.columns = _rightColumn;
                 rightDatagrid.requestedRowCount = requestedRowCount;
@@ -199,7 +205,7 @@ package jp.co.baykraft.kdm
         //////////////////////////////////////////////////////////////////////
         private var _dataProvider: IList;
         /**
-         *  @copy spark.components.DataGrid#dataProvider
+         *  @see spark.components.DataGrid#dataProvider
          */
         public function get dataProvider():IList {
             return _dataProvider;
@@ -287,39 +293,37 @@ package jp.co.baykraft.kdm
             }
         }
 
-        private var _draggableFlg: Boolean;
-        [Bindable(event="draggableFlgChange")]
+        private var _dragEnabled: Boolean = false;
         /**
          *  
+         *  @see mx.controls.DataGrid#dragEnabled
          */
-        public function get draggableFlg():Boolean {
-            return _draggableFlg;
+        public function get dragEnabled():Boolean {
+            return _dragEnabled;
         }
         /**
          * @private
          */
-        public function set draggableFlg(value:Boolean):void {
-            if (_draggableFlg !== value) {
-                _draggableFlg = value;
-                dispatchEvent(new Event("draggableFlgChange"));
+        public function set dragEnabled(value:Boolean):void {
+            if (_dragEnabled !== value) {
+                _dragEnabled = value;
             }
         }
 
-        private var _dropableFlg: Boolean;
-        [Bindable(event="dropableFlgChange")]
+        private var _dropEnabled: Boolean = false;
         /**
-         *  
+         * 
+         *  @see mx.controls.DataGrid#dropEnabled
          */
-        public function get dropableFlg():Boolean {
-            return _dropableFlg;
+        public function get dropEnabled():Boolean {
+            return _dropEnabled;
         }
         /**
          * @private
          */
-        public function set dropableFlg(value:Boolean):void {
-            if (_dropableFlg !== value) {
-                _dropableFlg = value;
-                dispatchEvent(new Event("dropableFlgChange"));
+        public function set dropEnabled(value:Boolean):void {
+            if (_dropEnabled !== value) {
+                _dropEnabled = value;
             }
         }
         private var _requestedRowCount: Number = DEFAULT_REQUEST_ROW_COUNT;
@@ -355,6 +359,15 @@ package jp.co.baykraft.kdm
         //  private 系の処理
         //////////////////////////////////////////////////////////////////////
         /**
+         * 
+         * @param event
+         * 
+         */
+        private function creationCompleteHandler(event: FlexEvent): void {
+            this.addEventListener(DragEvent.DRAG_ENTER, dragEnterHandler);
+            dispatchEvent(new Event("lockedColumnCountChange"));
+        }
+        /**
          * 左側グリッドのロールオーバハンドラ
          * @param event
          * 
@@ -377,25 +390,35 @@ package jp.co.baykraft.kdm
             leftDatagrid.grid.hoverRowIndex = event.rowIndex;
         }
         /**
-         *  TODO 結果的に再帰処理がされない実装になっているが、論理的にそれを塞ぐ実装を考慮したいけど、アーキテクトが思いつかない
+         *  左側データグリッドのホバーインジケータが変更あったときのハンドラ<br/>
+         *  左側データグリッドのホバーインジケータが未選択でかつ
+         *  右側データグリッドのホバーインジケータがすでに未選択状態でないとき
+         *  右側データグリッドのホバーインジケータを未選択にする。
          * @param event 
          */
         private function leftDatagridHoverRowIndexHandler(event: Event): void {
-            trace("TODO...left :", event.currentTarget);
-            if (Grid(event.currentTarget).hoverRowIndex < 0) {
-                rightDatagrid.grid.hoverRowIndex = -1;
-                rightDatagrid.grid.hoverColumnIndex = -1;
+            if (!rightDatagrid) {
+                return;
+            }
+            if (Grid(event.currentTarget).hoverRowIndex < 0 && rightDatagrid.grid.hoverRowIndex > HOVER_UNSELECTED) {
+                rightDatagrid.grid.hoverRowIndex = HOVER_UNSELECTED;
+                rightDatagrid.grid.hoverColumnIndex = HOVER_UNSELECTED;
             }
         }
         /**
-         *  TODO 結果的に再帰処理がされない実装になっているが、論理的にそれを塞ぐ実装を考慮したいけど、アーキテクトが思いつかない
+         *  右側データグリッドのホバーインジケータが変更あったときのハンドラ<br/>
+         *  右側データグリッドのホバーインジケータが未選択でかつ
+         *  左側データグリッドのホバーインジケータがすでに未選択状態でないとき
+         *  左側データグリッドのホバーインジケータを未選択にする。
          * @param event 
          */
         private function rightDatagridHoverRowIndexHandler(event: Event): void {
-            trace("TODO...right :", event.currentTarget);
-            if (Grid(event.currentTarget).hoverRowIndex < 0) {
-                leftDatagrid.grid.hoverRowIndex = -1;
-                leftDatagrid.grid.hoverColumnIndex = -1;
+            if (!leftDatagrid) {
+                return;
+            }
+            if (Grid(event.currentTarget).hoverRowIndex < 0 && leftDatagrid.grid.hoverRowIndex > HOVER_UNSELECTED) {
+                leftDatagrid.grid.hoverRowIndex = HOVER_UNSELECTED;
+                leftDatagrid.grid.hoverColumnIndex = HOVER_UNSELECTED;
             }
         }
         /**
@@ -446,7 +469,37 @@ package jp.co.baykraft.kdm
             }
         }
         /**
-         * 固定列の左からの列数を変更したら発するかもしれないかもしれないかもしれない
+         *  ドラッグ開始時
+         * @param event
+         * 
+         */
+        private function rightDatagridGridMouseDragHandler(event: GridEvent): void {
+            if (DragManager.isDragging)
+                return;
+
+            var dg: KdmDataGrid = event.currentTarget as KdmDataGrid;
+            var dragInitiator: IGridItemRenderer = event.itemRenderer;
+            var label: Label = new Label();
+            label.text = dragInitiator.label;
+            var proxy:Group = new Group();
+            proxy.styleName = dg;
+            proxy.width = dg.grid.width;
+            proxy.addElement(label);
+            var ds:DragSource = new DragSource();
+            ds.addHandler(getSelectedItems, CALL_DRAG_DROP_FORMAT);
+            DragManager.doDrag(dg, ds, event, proxy as IFlexDisplayObject, -event.localX, -event.stageY);
+        }
+        /**
+         * 
+         * @return 
+         * 
+         */
+        private function getSelectedItems(): Vector.<Object> {
+            return rightDatagrid.selectedItems;
+        }
+
+        /**
+         * 固定列（の左からの列数）を変更したら発するかもしれないかもしれないかもしれない
          * @param event
          * 
          */
@@ -471,14 +524,8 @@ package jp.co.baykraft.kdm
          * 
          */
         private function gridSeparatorMouseDownHandler(event: MouseEvent): void {
-            trace("まうすダウン");
             if (!event.buttonDown)
                 return;
-
-            // 
-            if (!hasEventListener(DragEvent.DRAG_ENTER)) {
-                addEventListener(DragEvent.DRAG_ENTER, dragEnterHandler);
-            }
 
             var dragInitiator:Group = Group(event.currentTarget);
             var ds:DragSource = new DragSource();
@@ -493,14 +540,17 @@ package jp.co.baykraft.kdm
          * 
          */
         private function dragEnterHandler(event: DragEvent): void {
+            DragManager.acceptDragDrop(leftDatagrid);
+            DragManager.acceptDragDrop(rightDatagrid);
             // 判定はこのコンポーネントに独自ドロップ Enter の時に判定させないため
             if (event.dragSource.hasFormat("_gridSeparator")) {
-                DragManager.acceptDragDrop(leftDatagrid);
-                DragManager.acceptDragDrop(rightDatagrid);
                 leftDatagrid.hasAddEventLister(DragEvent.DRAG_DROP, dragDropHandler);
                 leftDatagrid.hasAddEventLister(DragEvent.DRAG_COMPLETE, dragCompleteHandler);
                 rightDatagrid.hasAddEventLister(DragEvent.DRAG_DROP, dragDropHandler);
                 rightDatagrid.hasAddEventLister(DragEvent.DRAG_COMPLETE, dragCompleteHandler);
+            }
+            else if (dropEnabled && event.dragSource.hasFormat(CALL_DRAG_DROP_FORMAT)) {
+                rightDatagrid.hasAddEventLister(DragEvent.DRAG_DROP, dragDropHandler);
             }
         }
         /**
@@ -524,6 +574,14 @@ package jp.co.baykraft.kdm
                 }
                 leftDatagrid.width = leftWidth;
                 rightDatagrid.width = rightWidth;
+            }
+            else if (event.dragSource.hasFormat(CALL_DRAG_DROP_FORMAT)) {
+                var data:Vector.<Object> = event.dragSource.dataForFormat(CALL_DRAG_DROP_FORMAT) as Vector.<Object>;
+                var list: ArrayCollection = (null == dataProvider) ? new ArrayCollection() : dataProvider as ArrayCollection;
+                for each (var obj: Object in data) {
+                    list.addItem(obj);
+                }
+                dataProvider = list;
             }
         }
         private function dragCompleteHandler(event: DragEvent): void {

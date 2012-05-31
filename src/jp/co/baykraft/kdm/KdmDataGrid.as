@@ -194,8 +194,8 @@ package jp.co.baykraft.kdm
          * @param useWeakReference 
          * 
          */
-        public function hasAddEventLister(
-            type:String, listener:Function, useCapture:Boolean=false, priority:int=0, useWeakReference:Boolean=false): void {
+        public function hasAddEventLister(type:String, listener:Function,
+                                          useCapture:Boolean=false, priority:int=0, useWeakReference:Boolean=false): void {
             if (hasEventListener(type))
                 return;
 
@@ -232,16 +232,17 @@ package jp.co.baykraft.kdm
                 return;
 
             var l: IList = topGrid.columns;
-            var maxWidth: Number = topScroller.width;
+            trace(grid.width, ":", scrollerVertivalBar.width);
+            var maxWidth: Number = width + scrollerVertivalBar.width;
             // 各列に対して (forEach) 無名関数を実行
-            grid.columns.toArray().forEach(function(item:*, index:int, array:Array):void{
-                var w: Number = GridColumn(item).width;                 // grid の列幅
-                if (isNaN(w)) {                                         // 値が NaN の時
+            topGrid.columns.toArray().forEach(function(item:*, index:int, array:Array):void{
+                var w: Number = grid.getColumnWidth(index);             // grid の列幅
+                var col: GridColumn = item as GridColumn;
+                if (isNaN(w) || isNaN(col.width)) {                                         // 値が NaN の時
                     w = maxWidth - gridColumnsWidthPlus(l);             // 全体の幅より NaN を含まない幅の合計を引いたもの
                 }
-                var col: GridColumn = l.toArray()[index] as GridColumn;
                 col.width = w;
-                l.itemUpdated(col);
+                topGrid.columns.itemUpdated(col);
             });
         }
         /**
